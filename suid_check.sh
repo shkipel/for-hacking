@@ -1,25 +1,25 @@
 #!/bin/bash
 
-echo "[*] Поиск всех SUID-бинарей в системе..."
+echo "[*] Searching for all SUID binaries on the system..."
 SUID_BINARIES=$(find / -perm -4000 -type f 2>/dev/null)
 
-echo "[+] Найдено $(echo "$SUID_BINARIES" | wc -l) SUID-файлов."
+echo "[+] Found $(echo "$SUID_BINARIES" | wc -l) SUID files."
 
-# Фильтры полезных утилит (можно расширять)
+# List of potentially useful binaries
 USEFUL=("less" "more" "vi" "vim" "nano" "awk" "find" "python" "perl" "env" "bash" "sh" "man" "tee" "cp" "tar" "gzip" "cat")
 
-echo -e "\n[*] Поиск потенциально полезных бинарей:"
+echo -e "\n[*] Looking for potentially useful SUID binaries:"
 for bin in $SUID_BINARIES; do
     for keyword in "${USEFUL[@]}"; do
         if echo "$bin" | grep -q "$keyword"; then
-            echo "[!] Найден интересный SUID: $bin"
+            echo "[!] Interesting SUID binary found: $bin"
         fi
     done
 done
 
-echo -e "\n[*] Поиск бинарей, вызывающих другие программы (возможно через system/popen)..."
+echo -e "\n[*] Checking if any SUID binaries call other executables (via system()/popen/etc):"
 for bin in $SUID_BINARIES; do
     strings "$bin" 2>/dev/null | grep -E "/bin/|/usr/bin/" | grep -Ev "ld|lib|/lib/" | sort -u | while read line; do
-        echo "[?] $bin вызывает $line"
+        echo "[?] $bin calls $line"
     done
 done
